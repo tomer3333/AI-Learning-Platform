@@ -2,6 +2,18 @@
 
 export type AppStage = 'UPLOAD' | 'VERIFICATION' | 'RESULT';
 
+// ─── Syllabus ─────────────────────────────────────────────────────────────────
+
+export interface SyllabusTopic {
+  id: string;
+  label: string;
+}
+
+export interface SyllabusCategory {
+  categoryName: string;
+  topics: SyllabusTopic[];
+}
+
 // ─── Vocabulary ───────────────────────────────────────────────────────────────
 
 /** A single vocabulary pair extracted from a whiteboard image. */
@@ -76,6 +88,7 @@ export interface Student {
   syllabus_stage_index: number;
   script_preference: ScriptPreference;
   general_notes?: string | null;
+  phone_number?: string | null;
   /** DB-persisted payment flag, default false. */
   payment_paid: boolean;
   created_at: string;
@@ -109,4 +122,14 @@ export interface LessonSummary {
 export interface CreateLessonSummaryPayload {
   topicsCovered: string[];
   teacherNote: string;
+}
+
+// ─── Create Student ───────────────────────────────────────────────────────────
+
+export interface CreateStudentPayload {
+  name: string;
+  syllabus_stage_index: number;
+  script_preference?: ScriptPreference;
+  general_notes?: string | null;
+  phone_number?: string | null;
 }

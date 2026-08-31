@@ -7,6 +7,8 @@ import type {
   StudentWithHistory,
   LessonSummary,
   CreateLessonSummaryPayload,
+  SyllabusCategory,
+  CreateStudentPayload,
 } from '../types/homework';
 
 // ─── Axios instance ───────────────────────────────────────────────────────────
@@ -160,5 +162,27 @@ export async function getLessonSummaries(
   const { data } = await apiClient.get<ApiSuccessResponse<LessonSummary[]>>(
     `/students/${studentId}/lessons`
   );
+  return data.data;
+}
+
+// ─── Syllabus ─────────────────────────────────────────────────────────────────
+
+/**
+ * Returns the authoritative ARABIC_SYLLABUS (categories + topics) from the backend.
+ * Maps to: GET /api/syllabus
+ */
+export async function getSyllabus(): Promise<SyllabusCategory[]> {
+  const { data } = await apiClient.get<ApiSuccessResponse<SyllabusCategory[]>>('/syllabus');
+  return data.data;
+}
+
+// ─── Create student ───────────────────────────────────────────────────────────
+
+/**
+ * Creates a new student.
+ * Maps to: POST /api/students
+ */
+export async function createStudent(payload: CreateStudentPayload): Promise<Student> {
+  const { data } = await apiClient.post<ApiSuccessResponse<Student>>('/students', payload);
   return data.data;
 }

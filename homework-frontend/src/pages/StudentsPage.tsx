@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, ChevronLeft, BookOpen, Languages, Loader2, AlertCircle, PlusCircle, Search } from 'lucide-react';
+import { Users, ChevronLeft, BookOpen, Languages, UserPlus, AlertCircle, PlusCircle, Search } from 'lucide-react';
 import { useStudents } from '../hooks/useHomeworkAPI';
 import type { Student, ScriptPreference } from '../types/homework';
 
@@ -125,12 +125,11 @@ export default function StudentsPage() {
             בחר תלמיד להצגת הפרופיל, תיעוד שיעור וייצור שיעורי בית.
           </p>
         </div>
-        {/* Placeholder — future: add student */}
+        {/* Add student */}
         <button
           id="add-student-btn"
-          disabled
-          title="בקרוב"
-          className="flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-400 cursor-not-allowed"
+          onClick={() => navigate('/students/new')}
+          className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition-all"
         >
           <PlusCircle size={16} />
           הוסף תלמיד
@@ -176,10 +175,10 @@ export default function StudentsPage() {
       {/* Empty state — no students at all */}
       {!isLoading && !isError && students?.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white p-16 text-center">
-          <Loader2 size={32} className="mb-4 text-gray-300" />
+          <UserPlus size={32} className="mb-4 text-gray-300" />
           <p className="text-sm font-medium text-gray-500">אין תלמידים עדיין</p>
           <p className="mt-1 text-xs text-gray-400">
-            הוסף תלמידים באמצעות seed script או ה-API.
+            לחץ על “הוסף תלמיד” כדי להתחיל.
           </p>
         </div>
       )}

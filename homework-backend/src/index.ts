@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import path from 'path';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -8,29 +9,36 @@ import { AppDataSource } from './config/data-source';
 import apiRouter from './routes';
 import { AppError } from './utils/errors';
 
+// Absolute path to the compiled React frontend (relative to this compiled file in dist/)
+const FRONTEND_DIST = path.join(__dirname, '..', '..', 'homework-frontend', 'dist');
+
 const app = express();
 
 // Security & Parsing Middlewares
-app.use(helmet());
+// In production (local desktop app), CSP is relaxed — no internet exposure risk.
+app.use(
+  helmet({
+    contentSecurityPolicy: config.isProduction ? false : undefined,
+  })
+);
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Root welcome route
-app.get('/', (_req: Request, res: Response) => {
-  res.json({
-    message: 'Welcome to the Student Homework API',
-    endpoints: {
-      health: '/api/health',
-      students: '/api/students',
-      homeworks: '/api/homeworks',
-      generateHomework: 'POST /api/homeworks/generate',
-    },
-  });
-});
-
-// API Routes
+// API Routes (must come before static serving so /api/* is never intercepted by the SPA fallback)
 app.use('/api', apiRouter);
+
+// ── Production: Serve compiled React frontend ──────────────────────────────────
+if (config.isProduction) {
+  // 1. Serve all static assets (JS, CSS, images) from the dist folder
+  app.use(express.static(FRONTEND_DIST));
+
+  // 2. SPA fallback — any GET request that doesn't match an API route or a
+  //    static file gets index.html so React Router can handle client-side routing.
+  app.get('*', (_req: Request, res: Response) => {
+    res.sendFile(path.join(FRONTEND_DIST, 'index.html'));
+  });
+}
 
 // 404 Not Found Middleware
 app.use((_req: Request, res: Response) => {

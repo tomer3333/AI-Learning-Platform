@@ -31,6 +31,9 @@ export class Student {
   @Column({ type: 'text', nullable: true })
   general_notes?: string | null;
 
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  phone_number?: string | null;
+
   @Column({ type: 'boolean', default: false })
   payment_paid: boolean;
 
