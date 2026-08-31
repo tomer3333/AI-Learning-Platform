@@ -14,18 +14,18 @@ import type { HomeworkResult, VocabularyItem } from '../types/homework';
 // ── Wizard step type ───────────────────────────────────────────────────────────
 type WizardStep = 'input' | 'verify' | 'result';
 
-// ── Homework type options (dummy — wired to backend in a future phase) ─────────
+// ── Homework type options ──────────────────────────────────────────────────────
 const HOMEWORK_TYPES = [
-  { id: 'fill_blank',         label: 'השלם את החסר' },
+  { id: 'fill_blank', label: 'השלם את החסר' },
   { id: 'sentence_translate', label: 'תרגום משפטים' },
-  { id: 'story_simulation',   label: 'סיפור סימולציה' },
+  { id: 'story_simulation', label: 'סיפור סימולציה' },
 ];
 
 // ── Step indicator ─────────────────────────────────────────────────────────────
 
 function StepIndicator({ step }: { step: WizardStep }) {
   const steps: { id: WizardStep; label: string }[] = [
-    { id: 'input',  label: 'פרטי השיעור' },
+    { id: 'input', label: 'פרטי השיעור' },
     { id: 'verify', label: 'אימות מילים' },
     { id: 'result', label: 'מטלה מוכנה' },
   ];
@@ -33,7 +33,7 @@ function StepIndicator({ step }: { step: WizardStep }) {
   return (
     <nav aria-label="שלבי האשף" className="mb-8 flex items-center gap-0">
       {steps.map((s, i) => {
-        const done   = i < idx;
+        const done = i < idx;
         const active = i === idx;
         return (
           <div key={s.id} className="flex flex-1 items-center">
@@ -41,7 +41,7 @@ function StepIndicator({ step }: { step: WizardStep }) {
               <div
                 className={[
                   'flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all',
-                  done   ? 'bg-indigo-600 text-white'                        : '',
+                  done ? 'bg-indigo-600 text-white' : '',
                   active ? 'bg-indigo-600 text-white ring-4 ring-indigo-100' : '',
                   !done && !active ? 'border-2 border-gray-300 bg-white text-gray-400' : '',
                 ].join(' ')}
@@ -101,10 +101,10 @@ export default function CreatePage() {
 
   // ── Step 1 state: syllabus, teacher note, images, hw types ───────────────────
   const [selectedTopics, setSelectedTopics] = useState<Set<string>>(new Set());
-  const [teacherNote,    setTeacherNote]    = useState('');
-  const [selectedFiles,  setSelectedFiles]  = useState<File[]>([]);
-  const [isDragging,     setIsDragging]     = useState(false);
-  const [selectedTypes,  setSelectedTypes]  = useState<Set<string>>(
+  const [teacherNote, setTeacherNote] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [selectedTypes, setSelectedTypes] = useState<Set<string>>(
     new Set(HOMEWORK_TYPES.map((t) => t.id))
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -113,9 +113,9 @@ export default function CreatePage() {
   const [vocab, setVocab] = useState<VocabularyItem[]>([]);
 
   // ── Shared async state ────────────────────────────────────────────────────────
-  const [isWorking, setIsWorking]   = useState(false);
-  const [workError, setWorkError]   = useState<string | null>(null);
-  const [result,    setResult]      = useState<HomeworkResult | null>(null);
+  const [isWorking, setIsWorking] = useState(false);
+  const [workError, setWorkError] = useState<string | null>(null);
+  const [result, setResult] = useState<HomeworkResult | null>(null);
 
   // ── TanStack Query mutation (must be called unconditionally — Rules of Hooks) ─
   const { mutateAsync: createLesson } = useCreateLessonSummary();
@@ -171,9 +171,9 @@ export default function CreatePage() {
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   }
 
-  const onDragOver  = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
+  const onDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
   const onDragLeave = () => setIsDragging(false);
-  const onDrop      = (e: React.DragEvent) => {
+  const onDrop = (e: React.DragEvent) => {
     e.preventDefault(); setIsDragging(false); addFiles(e.dataTransfer.files);
   };
 
@@ -227,7 +227,7 @@ export default function CreatePage() {
     setWorkError(null);
     setIsWorking(true);
     try {
-      const hw = await generateHomework(studentId, cleaned);
+      const hw = await generateHomework(studentId, cleaned, Array.from(selectedTypes));
       setResult(hw);
       setStep('result');
     } catch (err: unknown) {
@@ -517,7 +517,7 @@ export default function CreatePage() {
           <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-5">
             <h2 className="text-base font-bold text-indigo-900">🔍 אמת את המילים שחולצו מהלוח</h2>
             <p className="mt-1 text-sm text-indigo-700">
-              בדוק שה-OCR זיהה נכון. תקן שגיאות, הוסף מילים שהוחמצו, או מחק מילים לא רצויות.
+              בדוק שה-الذكاء الاصطناعي זיהה נכון. תקן שגיאות, הוסף מילים שהוחמצו, או מחק מילים לא רצויות.
               לאחר מכן לחץ "אשר מילים וייצר מטלה".
             </p>
           </div>

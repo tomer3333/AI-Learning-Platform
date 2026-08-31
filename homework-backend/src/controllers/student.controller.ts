@@ -31,7 +31,7 @@ export class StudentController {
   }
 
   async createStudent(req: Request, res: Response): Promise<void> {
-    const { name, syllabus_stage_index, script_preference, general_notes } = req.body;
+    const { name, syllabus_stage_index, script_preference, general_notes, phone_number } = req.body;
 
     if (!name || typeof name !== 'string' || name.trim() === '') {
       throw new BadRequestError('Field "name" is required and must be a non-empty string');
@@ -50,11 +50,16 @@ export class StudentController {
       );
     }
 
+    if (phone_number !== undefined && phone_number !== null && typeof phone_number !== 'string') {
+      throw new BadRequestError('Field "phone_number" must be a string if provided');
+    }
+
     const student = await studentService.create({
       name: name.trim(),
       syllabus_stage_index: parseInt(syllabus_stage_index, 10),
       script_preference: script_preference || 'hebrew_transliteration',
       general_notes: general_notes || null,
+      phone_number: phone_number?.trim() || null,
     });
 
     res.status(201).json({ success: true, data: student });

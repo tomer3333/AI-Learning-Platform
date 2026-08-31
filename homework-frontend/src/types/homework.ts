@@ -2,6 +2,18 @@
 
 export type AppStage = 'UPLOAD' | 'VERIFICATION' | 'RESULT';
 
+// ─── Syllabus ─────────────────────────────────────────────────────────────────
+
+export interface SyllabusTopic {
+  id: string;
+  label: string;
+}
+
+export interface SyllabusCategory {
+  categoryName: string;
+  topics: SyllabusTopic[];
+}
+
 // ─── Vocabulary ───────────────────────────────────────────────────────────────
 
 /** A single vocabulary pair extracted from a whiteboard image. */
@@ -35,11 +47,12 @@ export interface SituationalStorySection {
 /**
  * The full generated homework package returned by POST /api/homeworks/generate.
  * Mirrors the backend HomeworkPackage interface exactly.
+ * All sections are optional because the teacher may deselect any exercise type.
  */
 export interface HomeworkPackage {
-  fill_in_the_blank: FillInTheBlankSection;
-  translation_he_to_ar: TranslationHeToArSection;
-  situational_story: SituationalStorySection;
+  fill_in_the_blank?: FillInTheBlankSection;
+  translation_he_to_ar?: TranslationHeToArSection;
+  situational_story?: SituationalStorySection;
 }
 
 // ─── API response wrappers ────────────────────────────────────────────────────
@@ -75,6 +88,7 @@ export interface Student {
   syllabus_stage_index: number;
   script_preference: ScriptPreference;
   general_notes?: string | null;
+  phone_number?: string | null;
   /** DB-persisted payment flag, default false. */
   payment_paid: boolean;
   created_at: string;
@@ -108,4 +122,14 @@ export interface LessonSummary {
 export interface CreateLessonSummaryPayload {
   topicsCovered: string[];
   teacherNote: string;
+}
+
+// ─── Create Student ───────────────────────────────────────────────────────────
+
+export interface CreateStudentPayload {
+  name: string;
+  syllabus_stage_index: number;
+  script_preference?: ScriptPreference;
+  general_notes?: string | null;
+  phone_number?: string | null;
 }

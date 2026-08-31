@@ -7,8 +7,10 @@ import {
   updatePaymentStatus,
   createLessonSummary,
   getLessonSummaries,
+  getSyllabus,
+  createStudent,
 } from '../api/client';
-import type { VocabularyItem, HomeworkResult, Student, StudentWithHistory, LessonSummary, CreateLessonSummaryPayload } from '../types/homework';
+import type { VocabularyItem, HomeworkResult, Student, StudentWithHistory, LessonSummary, CreateLessonSummaryPayload, SyllabusCategory, CreateStudentPayload } from '../types/homework';
 
 // ─── Query keys ───────────────────────────────────────────────────────────────
 
@@ -161,6 +163,35 @@ export function useCreateLessonSummary() {
     mutationFn: ({ studentId, payload }) => createLessonSummary(studentId, payload),
     onSuccess: (_result, { studentId }) => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.lessonSummaries(studentId) });
+    },
+  });
+}
+
+// ─── Hook: Syllabus ─────────────────────────────────────────────────────────────
+
+/**
+ * Fetches the ARABIC_SYLLABUS from the backend.
+ * staleTime: Infinity — the syllabus never changes at runtime, so we only load it once.
+ */
+export function useSyllabus() {
+  return useQuery<SyllabusCategory[], Error>({
+    queryKey: ['syllabus'],
+    queryFn: getSyllabus,
+    staleTime: Infinity,
+  });
+}
+
+// ─── Hook: Create student ────────────────────────────────────────────────────────
+
+/**
+ * Creates a student and invalidates the students list so the roster refreshes.
+ */
+export function useCreateStudent() {
+  const queryClient = useQueryClient();
+  return useMutation<Student, Error, CreateStudentPayload>({
+    mutationFn: createStudent,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.students });
     },
   });
 }
