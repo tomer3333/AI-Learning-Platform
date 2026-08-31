@@ -81,13 +81,15 @@ export async function extractVocabulary(
  */
 export async function generateHomework(
   studentId: string,
-  verifiedVocabulary: VocabularyItem[]
+  verifiedVocabulary: VocabularyItem[],
+  selectedTypes: string[] = []
 ): Promise<HomeworkResult> {
   const { data } = await apiClient.post<ApiSuccessResponse<HomeworkResult>>(
     '/homeworks/generate',
     {
       student_id: studentId,
       verified_vocabulary: verifiedVocabulary,
+      selected_types: selectedTypes,
     }
   );
 

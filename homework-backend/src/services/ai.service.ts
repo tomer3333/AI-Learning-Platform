@@ -29,9 +29,9 @@ export interface SituationalStorySection {
 }
 
 export interface HomeworkPackage {
-  fill_in_the_blank: FillInTheBlankSection;
-  translation_he_to_ar: TranslationHeToArSection;
-  situational_story: SituationalStorySection;
+  fill_in_the_blank?: FillInTheBlankSection;
+  translation_he_to_ar?: TranslationHeToArSection;
+  situational_story?: SituationalStorySection;
 }
 
 // ─── Step 1: Extraction Schema ────────────────────────────────────────────────
@@ -55,77 +55,93 @@ export const extractionResponseSchema: Schema = {
   },
 };
 
-// ─── Step 2: Generation Schema ────────────────────────────────────────────────
+// ─── Step 2: Generation Schema (built dynamically per selected exercise types) ─
 
-export const homeworkPackageSchema: Schema = {
+const FILL_IN_THE_BLANK_SCHEMA: Schema = {
   type: Type.OBJECT,
   properties: {
-    fill_in_the_blank: {
-      type: Type.OBJECT,
-      properties: {
-        word_bank: {
-          type: Type.ARRAY,
-          description:
-            'Each entry MUST include both the Arabic/transliteration word AND its Hebrew translation, ' +
-            'formatted as: "<arabic_or_transliteration> — <hebrew_translation>". ' +
-            'Example: "كِتَاب — ספר" or "כִּתָּאב — ספר".',
-          items: { type: Type.STRING },
-        },
-        questions: {
-          type: Type.ARRAY,
-          description:
-            'EXHAUSTIVE COVERAGE REQUIRED: This array MUST contain exactly one entry per ' +
-            'input vocabulary word. The length of this array MUST equal the number of words ' +
-            'provided in the vocabulary list. Every single input word must be the missing_word ' +
-            'in exactly one question. No word may be skipped.',
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              context_sentence: {
-                type: Type.STRING,
-                description:
-                  'MUST be in Arabic or Hebrew Transliteration, NOT Hebrew. ' +
-                  'The sentence contains a blank "___" where the missing_word belongs.',
-              },
-              missing_word: {
-                type: Type.STRING,
-                description:
-                  'The Arabic/transliteration word from the vocabulary list that fills the blank. ' +
-                  'Must be one of the provided input vocabulary words.',
-              },
-              hebrew_translation: {
-                type: Type.STRING,
-                description: 'Hebrew translation of the full context_sentence.',
-              },
-            },
-            required: ["context_sentence", "missing_word", "hebrew_translation"],
+    word_bank: {
+      type: Type.ARRAY,
+      description:
+        'Each entry MUST include both the Arabic/transliteration word AND its Hebrew translation, ' +
+        'formatted as: "<arabic_or_transliteration> — <hebrew_translation>". ' +
+        'Example: "كِتَاب — ספר" or "כִּתָּאב — ספר".',
+      items: { type: Type.STRING },
+    },
+    questions: {
+      type: Type.ARRAY,
+      description:
+        'EXHAUSTIVE COVERAGE REQUIRED: This array MUST contain exactly one entry per ' +
+        'input vocabulary word (plus any padding words needed to reach the minimum of 15). ' +
+        'Every single input word must be the missing_word in exactly one question. No word may be skipped.',
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          context_sentence: {
+            type: Type.STRING,
+            description:
+              'MUST be in Arabic or Hebrew Transliteration, NOT Hebrew. ' +
+              'The sentence contains a blank "___" where the missing_word belongs.',
+          },
+          missing_word: {
+            type: Type.STRING,
+            description:
+              'The Arabic/transliteration word that fills the blank.',
+          },
+          hebrew_translation: {
+            type: Type.STRING,
+            description: 'Hebrew translation of the full context_sentence.',
           },
         },
+        required: ['context_sentence', 'missing_word', 'hebrew_translation'],
       },
-      required: ["word_bank", "questions"],
-    },
-    translation_he_to_ar: {
-      type: Type.OBJECT,
-      properties: {
-        sentences_to_translate: {
-          type: Type.ARRAY,
-          items: { type: Type.STRING },
-        },
-      },
-      required: ["sentences_to_translate"],
-    },
-    situational_story: {
-      type: Type.OBJECT,
-      properties: {
-        scenario_prompt_hebrew: {
-          type: Type.STRING,
-        },
-      },
-      required: ["scenario_prompt_hebrew"],
     },
   },
-  required: ["fill_in_the_blank", "translation_he_to_ar", "situational_story"],
+  required: ['word_bank', 'questions'],
 };
+
+const TRANSLATION_HE_TO_AR_SCHEMA: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    sentences_to_translate: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
+    },
+  },
+  required: ['sentences_to_translate'],
+};
+
+const SITUATIONAL_STORY_SCHEMA: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    scenario_prompt_hebrew: { type: Type.STRING },
+  },
+  required: ['scenario_prompt_hebrew'],
+};
+
+/**
+ * Returns a JSON schema that only includes the sections the teacher has selected.
+ * This structurally prevents the AI from generating unwanted exercise types.
+ */
+function buildHomeworkPackageSchema(selectedTypes: string[]): Schema {
+  const properties: Record<string, Schema> = {};
+  const required: string[] = [];
+
+  if (selectedTypes.includes('fill_blank')) {
+    properties.fill_in_the_blank = FILL_IN_THE_BLANK_SCHEMA;
+    required.push('fill_in_the_blank');
+  }
+  if (selectedTypes.includes('sentence_translate')) {
+    properties.translation_he_to_ar = TRANSLATION_HE_TO_AR_SCHEMA;
+    required.push('translation_he_to_ar');
+  }
+  if (selectedTypes.includes('story_simulation')) {
+    properties.situational_story = SITUATIONAL_STORY_SCHEMA;
+    required.push('situational_story');
+  }
+
+  return { type: Type.OBJECT, properties, required };
+}
 
 // ─── AI Service ───────────────────────────────────────────────────────────────
 
@@ -245,7 +261,8 @@ export class AIService {
     scriptPreference: string,
     verifiedVocabulary: ExtractedVocabularyItem[],
     topicsLabels: string[] = [],
-    teacherNote: string | null = null
+    teacherNote: string | null = null,
+    selectedTypes: string[] = ['fill_blank', 'sentence_translate', 'story_simulation']
   ): Promise<HomeworkPackage> {
     const client = this.getClient();
 
@@ -257,8 +274,12 @@ export class AIService {
       scriptPreference,
       verifiedVocabulary,
       topicsLabels,
-      teacherNote
+      teacherNote,
+      selectedTypes
     );
+
+    // Schema is built dynamically to only include selected exercise sections
+    const dynamicSchema = buildHomeworkPackageSchema(selectedTypes);
 
     let response;
     try {
@@ -268,7 +289,7 @@ export class AIService {
           contents: [generationPrompt],
           config: {
             responseMimeType: 'application/json',
-            responseSchema: homeworkPackageSchema,
+            responseSchema: dynamicSchema,
           },
         })
       );
@@ -311,13 +332,15 @@ export async function generateHomeworkFromVocabulary(
   scriptPreference: string,
   verifiedVocabulary: ExtractedVocabularyItem[],
   topicsLabels: string[] = [],
-  teacherNote: string | null = null
+  teacherNote: string | null = null,
+  selectedTypes: string[] = ['fill_blank', 'sentence_translate', 'story_simulation']
 ): Promise<HomeworkPackage> {
   return aiService.generateHomeworkFromVocabulary(
     studentStage,
     scriptPreference,
     verifiedVocabulary,
     topicsLabels,
-    teacherNote
+    teacherNote,
+    selectedTypes
   );
 }
