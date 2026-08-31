@@ -170,6 +170,27 @@ export class HomeworkController {
       throw new NotFoundError(`Student with ID "${student_id}" not found`);
     }
 
+    // ── Resolve selected exercise types ────────────────────────────────────
+    const VALID_TYPES = new Set(['fill_blank', 'sentence_translate', 'story_simulation']);
+    const ALL_TYPES = ['fill_blank', 'sentence_translate', 'story_simulation'];
+
+    let selectedTypes: string[];
+    const rawTypes = req.body.selected_types;
+    if (!rawTypes || !Array.isArray(rawTypes) || rawTypes.length === 0) {
+      // Not provided — default to all types
+      selectedTypes = ALL_TYPES;
+    } else {
+      const invalidType = (rawTypes as any[]).find((t) => !VALID_TYPES.has(t));
+      if (invalidType !== undefined) {
+        throw new BadRequestError(
+          `Invalid exercise type "${invalidType}" in "selected_types". ` +
+          `Valid values: ${[...VALID_TYPES].join(', ')}`
+        );
+      }
+      selectedTypes = rawTypes as string[];
+    }
+    // ──────────────────────────────────────────────────────────────────────────
+
     // ── Fetch lesson context (most recent lesson summary) ──────────────────
     // Build a flat map from topic ID → Hebrew label for quick lookup
     const topicLabelMap = new Map<string, string>();
@@ -204,6 +225,7 @@ export class HomeworkController {
         '[HomeworkController] No lesson summary found for student — using fallback (stage-based) prompt'
       );
     }
+    console.log(`[HomeworkController] Selected exercise types: ${selectedTypes.join(', ')}`);
     // ──────────────────────────────────────────────────────────────────────────
 
     const homeworkPackage = await generateHomeworkFromVocabulary(
@@ -211,7 +233,8 @@ export class HomeworkController {
       student.script_preference,
       verified_vocabulary as ExtractedVocabularyItem[],
       topicsLabels,
-      teacherNote
+      teacherNote,
+      selectedTypes
     );
 
     const homework = await homeworkService.create({

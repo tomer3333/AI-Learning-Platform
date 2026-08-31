@@ -35,11 +35,12 @@ export interface SituationalStorySection {
 /**
  * The full generated homework package returned by POST /api/homeworks/generate.
  * Mirrors the backend HomeworkPackage interface exactly.
+ * All sections are optional because the teacher may deselect any exercise type.
  */
 export interface HomeworkPackage {
-  fill_in_the_blank: FillInTheBlankSection;
-  translation_he_to_ar: TranslationHeToArSection;
-  situational_story: SituationalStorySection;
+  fill_in_the_blank?: FillInTheBlankSection;
+  translation_he_to_ar?: TranslationHeToArSection;
+  situational_story?: SituationalStorySection;
 }
 
 // ─── API response wrappers ────────────────────────────────────────────────────
